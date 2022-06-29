@@ -4,7 +4,8 @@ import json
 import argparse
 import logging
 
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__
+from datetime import datetime, timedelta
+from azure.storage.blob import BlobServiceClient, generate_account_sas, ResourceTypes, AccountSasPermissions, __version__
 
 logger = logging.getLogger("target-blob-storage")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -48,10 +49,11 @@ def upload(args):
     container_name = config['container']
     target_path = config['path_prefix']
     local_path = config['input_path']
-    connect_string = config['connect_string']
+    sas_token = config['sas_token']
 
     # Upload all data in input_path to Azure Blob Storage
-    blob_service_client = BlobServiceClient.from_connection_string(connect_string)
+    sas_url = f'{target_path}/{container_name}?{sas_token}'
+    blob_service_client = BlobServiceClient(account_url=sas_url)
 
     for root, dirs, files in os.walk(local_path):
         for file in files:

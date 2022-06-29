@@ -1,2 +1,5 @@
 .DS_Store
 tests/
+target_blob_storage.egg-info
+.input
+.secrets
