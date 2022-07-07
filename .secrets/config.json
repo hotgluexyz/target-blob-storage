@@ -1,0 +1,8 @@
+{
+    "container": "hotgluecontainer",
+    "path_prefix": "https://hotgluetest.blob.core.windows.net",
+    "input_path": "../.input",
+    "account_name": "hotgluetest",
+    "account_key": "S3GMnNEJobBv6Q2MCPpg5mfq8GVnmkbmlc/57B1nK1yVDM3iOrb79y23259/UGBooAprPmjiuk/M+AStzqleAw==",
+    "connect_string": "DefaultEndpointsProtocol=https;AccountName=hotgluetest;AccountKey=S3GMnNEJobBv6Q2MCPpg5mfq8GVnmkbmlc/57B1nK1yVDM3iOrb79y23259/UGBooAprPmjiuk/M+AStzqleAw==;EndpointSuffix=core.windows.net"
+}
