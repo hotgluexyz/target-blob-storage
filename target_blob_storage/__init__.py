@@ -46,11 +46,20 @@ def parse_args():
 def upload(args):
     logger.info(f"Exporting data...")
     config = args.config
-    container_name = config['container']
-    target_path = config['path_prefix']
-    local_path = config['input_path']
-    account_name = config['account_name']
-    account_key = config['account_key']
+
+    connect_string = config['connect_string']
+    
+    if connect_string:
+        connect_string = connect_string.split(';')
+        account_name = connect_string[1][12:]
+        account_key = connect_string[2][11:]
+    else:
+        account_name = config.get('account_name')
+        account_key = config.get('account_key')
+
+    container_name = config.get('container')
+    target_path = config.get('path_prefix')
+    local_path = config.get('input_path')
 
     sas_token = generate_account_sas(
         account_name = account_name,
