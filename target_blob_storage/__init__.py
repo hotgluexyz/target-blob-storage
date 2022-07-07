@@ -47,29 +47,25 @@ def upload(args):
     logger.info(f"Exporting data...")
     config = args.config
 
-    connect_string = config['connect_string']
+    container_name = config.get('container')
+    target_path = config.get('path_prefix')
+    local_path = config.get('input_path')
+    connect_string = config.get('connect_string')
     
     if connect_string:
-        connect_string = connect_string.split(';')
-        account_name = connect_string[1][12:]
-        account_key = connect_string[2][11:]
+        blob_service_client = BlobServiceClient.from_connection_string(connect_string)
     else:
         account_name = config.get('account_name')
         account_key = config.get('account_key')
 
-    container_name = config.get('container')
-    target_path = config.get('path_prefix')
-    local_path = config.get('input_path')
+        sas_token = generate_account_sas(
+            account_name = account_name,
+            account_key = account_key,
+            resource_types=ResourceTypes(object=True),
+            permission=AccountSasPermissions(read=True,add=True,create=True,write=True,delete=True,list=True),
+            expiry=datetime.utcnow() + timedelta(hours=1))
 
-    sas_token = generate_account_sas(
-        account_name = account_name,
-        account_key = account_key,
-        resource_types=ResourceTypes(object=True),
-        permission=AccountSasPermissions(read=True,add=True,create=True,write=True,delete=True,list=True),
-        expiry=datetime.utcnow() + timedelta(hours=1)
-    )
-
-    blob_service_client = BlobServiceClient(account_url=target_path, credential=sas_token)
+        blob_service_client = BlobServiceClient(account_url=target_path, credential=sas_token)
 
     for root, dirs, files in os.walk(local_path):
         for file in files:
