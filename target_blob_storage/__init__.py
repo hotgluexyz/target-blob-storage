@@ -4,7 +4,8 @@ import json
 import argparse
 import logging
 
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__
+from datetime import datetime, timedelta
+from azure.storage.blob import BlobServiceClient, generate_account_sas, ResourceTypes, AccountSasPermissions
 
 logger = logging.getLogger("target-blob-storage")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -45,13 +46,26 @@ def parse_args():
 def upload(args):
     logger.info(f"Exporting data...")
     config = args.config
-    container_name = config['container']
-    target_path = config['path_prefix']
-    local_path = config['input_path']
-    connect_string = config['connect_string']
 
-    # Upload all data in input_path to Azure Blob Storage
-    blob_service_client = BlobServiceClient.from_connection_string(connect_string)
+    container_name = config.get('container')
+    target_path = config.get('path_prefix')
+    local_path = config.get('input_path')
+    connect_string = config.get('connect_string')
+    
+    if connect_string:
+        blob_service_client = BlobServiceClient.from_connection_string(connect_string)
+    else:
+        account_name = config.get('account_name')
+        account_key = config.get('account_key')
+
+        sas_token = generate_account_sas(
+            account_name = account_name,
+            account_key = account_key,
+            resource_types=ResourceTypes(object=True),
+            permission=AccountSasPermissions(read=True,add=True,create=True,write=True,delete=True,list=True),
+            expiry=datetime.utcnow() + timedelta(hours=1))
+
+        blob_service_client = BlobServiceClient(account_url=target_path, credential=sas_token)
 
     for root, dirs, files in os.walk(local_path):
         for file in files:
