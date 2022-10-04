@@ -65,7 +65,7 @@ def upload(args):
             permission=AccountSasPermissions(read=True,add=True,create=True,write=True,delete=True,list=True),
             expiry=datetime.utcnow() + timedelta(hours=1))
 
-        blob_service_client = BlobServiceClient(account_url=target_path, credential=sas_token)
+        blob_service_client = BlobServiceClient(account_url=f"https://{account_name}.blob.core.windows.net", credential=sas_token)
 
     for root, dirs, files in os.walk(local_path):
         for file in files:
