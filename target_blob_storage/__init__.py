@@ -51,6 +51,7 @@ def upload(args):
     target_path = config.get('path_prefix')
     local_path = config.get('input_path')
     connect_string = config.get('connect_string')
+    overwrite = config.get("overwrite", False)
     
     if connect_string:
         blob_service_client = BlobServiceClient.from_connection_string(connect_string)
@@ -76,7 +77,7 @@ def upload(args):
             # Upload the created file
             with open(file_path, "rb") as data:
                 logger.debug(f"Uploading: {container_name}:{remote_file_path}")
-                blob_client.upload_blob(data)
+                blob_client.upload_blob(data, overwrite=overwrite)
 
     logger.info(f"Data exported.")
 
