@@ -52,7 +52,7 @@ def upload(args):
     local_path = config.get('input_path')
     connect_string = config.get('connect_string')
     overwrite = config.get("overwrite", False)
-    
+
     if connect_string:
         blob_service_client = BlobServiceClient.from_connection_string(connect_string)
     else:
@@ -64,12 +64,14 @@ def upload(args):
             account_key = account_key,
             resource_types=ResourceTypes(object=True),
             permission=AccountSasPermissions(read=True,add=True,create=True,write=True,delete=True,list=True),
-            expiry=datetime.utcnow() + timedelta(hours=1))
+            expiry=datetime.utcnow() + timedelta(hours=1)
+        )
 
         blob_service_client = BlobServiceClient(account_url=f"https://{account_name}.blob.core.windows.net", credential=sas_token)
 
     for root, dirs, files in os.walk(local_path):
         for file in files:
+            logger.info(f"Uploading file: {file}")
             file_path = os.path.join(root, file)
             remote_file_path = file_path.replace(local_path, target_path)
             blob_client = blob_service_client.get_blob_client(container=container_name, blob=remote_file_path)
@@ -77,7 +79,12 @@ def upload(args):
             # Upload the created file
             with open(file_path, "rb") as data:
                 logger.debug(f"Uploading: {container_name}:{remote_file_path}")
-                blob_client.upload_blob(data, overwrite=overwrite)
+                try:
+                    blob_client.upload_blob(data, overwrite=overwrite)
+                except Exception as e:
+                    logger.error(f"Error uploading file: {file_path} to {container_name}:{remote_file_path}")
+                    logger.error(e)
+                    raise e
 
     logger.info(f"Data exported.")
 
