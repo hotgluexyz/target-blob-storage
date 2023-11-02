@@ -76,7 +76,7 @@ def upload(args):
 
             # Upload the created file
             with open(file_path, "rb") as data:
-                logger.debug(f"Uploading: {container_name}:{remote_file_path}")
+                logger.info(f"Uploading: {container_name}:{remote_file_path}")
                 blob_client.upload_blob(data, overwrite=overwrite)
 
     logger.info(f"Data exported.")
