@@ -81,9 +81,11 @@ def upload(args):
                         blob_client.upload_blob(data, overwrite=overwrite)
                 except Exception as e:
                     logger.error(f"Failed to upload {file_path} to {remote_file_path}: {e}")
+                    raise e
 
     except Exception as e:
         logger.error(f"An error occurred during the export process: {e}")
+        raise e
 
     logger.info("Data export completed.")
 
