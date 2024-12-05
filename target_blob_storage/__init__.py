@@ -44,7 +44,7 @@ def parse_args():
 
 
 def upload(args):
-    logger.info(f"Exporting data...")
+    logger.info("Starting data export...")
     config = args.config
 
     container_name = config.get('container')
@@ -52,34 +52,42 @@ def upload(args):
     local_path = config.get('input_path')
     connect_string = config.get('connect_string')
     overwrite = config.get("overwrite", False)
-    
-    if connect_string:
-        blob_service_client = BlobServiceClient.from_connection_string(connect_string)
-    else:
-        account_name = config.get('account_name')
-        account_key = config.get('account_key')
 
-        sas_token = generate_account_sas(
-            account_name = account_name,
-            account_key = account_key,
-            resource_types=ResourceTypes(object=True),
-            permission=AccountSasPermissions(read=True,add=True,create=True,write=True,delete=True,list=True),
-            expiry=datetime.utcnow() + timedelta(hours=1))
+    try:
+        if connect_string:
+            blob_service_client = BlobServiceClient.from_connection_string(connect_string)
+        else:
+            account_name = config.get('account_name')
+            account_key = config.get('account_key')
 
-        blob_service_client = BlobServiceClient(account_url=f"https://{account_name}.blob.core.windows.net", credential=sas_token)
+            sas_token = generate_account_sas(
+                account_name=account_name,
+                account_key=account_key,
+                resource_types=ResourceTypes(object=True),
+                permission=AccountSasPermissions(read=True, add=True, create=True, write=True, delete=True, list=True),
+                expiry=datetime.utcnow() + timedelta(hours=1))
 
-    for root, dirs, files in os.walk(local_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            remote_file_path = file_path.replace(local_path, target_path)
-            blob_client = blob_service_client.get_blob_client(container=container_name, blob=remote_file_path)
+            blob_service_client = BlobServiceClient(account_url=f"https://{account_name}.blob.core.windows.net", credential=sas_token)
 
-            # Upload the created file
-            with open(file_path, "rb") as data:
-                logger.info(f"Uploading: {container_name}:{remote_file_path}")
-                blob_client.upload_blob(data, overwrite=overwrite)
+        for root, dirs, files in os.walk(local_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                remote_file_path = file_path.replace(local_path, target_path)
+                blob_client = blob_service_client.get_blob_client(container=container_name, blob=remote_file_path)
 
-    logger.info(f"Data exported.")
+                try:
+                    with open(file_path, "rb") as data:
+                        logger.info(f"Uploading: {container_name}:{remote_file_path}")
+                        blob_client.upload_blob(data, overwrite=overwrite)
+                except Exception as e:
+                    logger.exception(f"Failed to upload {file_path} to {remote_file_path}: {e}")
+                    raise e
+
+    except Exception as e:
+        logger.exception(f"An error occurred during the export process: {e}")
+        raise e
+
+    logger.info("Data export completed.")
 
 
 def main():
