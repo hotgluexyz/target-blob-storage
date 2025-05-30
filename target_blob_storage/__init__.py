@@ -5,6 +5,7 @@ import argparse
 import logging
 
 from datetime import datetime, timedelta
+import xml.etree.ElementTree as ET
 from azure.storage.blob import BlobServiceClient, generate_account_sas, ResourceTypes, AccountSasPermissions
 
 logger = logging.getLogger("target-blob-storage")
@@ -84,11 +85,27 @@ def upload(args):
                     raise e
 
     except Exception as e:
-        logger.exception(f"An error occurred during the export process: {e}")
-        raise e
+        error_text = str(e)
+        if "<Error>" in error_text.strip():
+            cleaned_message = parse_xml_and_extract_message(error_text)
+            raise Exception(cleaned_message)
+        else:
+            logger.exception(f"An error occurred during the export process: {error_text}")
+            raise e
 
     logger.info("Data export completed.")
 
+def parse_xml_and_extract_message(message):
+    try:
+        # Try to parse the message as XML
+        root = ET.fromstring(message)
+        message_node = root.find('Message')
+        if message_node is not None:
+            return message_node.text
+        else:
+            return message
+    except ET.ParseError as e:
+        return message
 
 def main():
     # Parse command line arguments
